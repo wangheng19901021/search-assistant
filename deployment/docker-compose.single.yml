@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # 一体化应用容器 - 包含前端、后端和数据库
+  search-assistant:
+    build:
+      context: ..
+      dockerfile: deployment/docker/Dockerfile.all-in-one
+    container_name: search-assistant-all-in-one
+    restart: unless-stopped
+    ports:
+      - "80:80"      # 前端Nginx
+      - "8080:8080"  # 后端API
+      - "3306:3306"  # MySQL数据库
+    volumes:
+      - app_data:/var/lib/mysql
+      - app_uploads:/app/uploads
+      - app_logs:/var/log
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123456
+      - MYSQL_DATABASE=search_assistant
+      - MYSQL_USER=findthing
+      - MYSQL_PASSWORD=findthing123
+      - JAVA_OPTS=-Xmx512m -Xms256m -Dfile.encoding=UTF-8
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health", "&&", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+
+volumes:
+  app_data:
+  app_uploads:
+  app_logs:

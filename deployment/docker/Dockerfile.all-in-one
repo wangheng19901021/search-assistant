@@ -1,0 +1,59 @@
+# 一体化Dockerfile - 所有服务在一个容器中
+FROM ubuntu:22.04
+
+# 避免交互式安装
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+
+# 安装基础软件
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    nginx \
+    mysql-server \
+    curl \
+    wget \
+    supervisor \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# 设置时区
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# 创建应用目录
+WORKDIR /app
+
+# 复制后端代码并构建
+COPY backend/ /app/backend/
+RUN cd /app/backend && chmod +x mvnw && ./mvnw clean package -DskipTests
+
+# 复制前端文件
+COPY frontend/ /usr/share/nginx/html/
+COPY frontend/nginx.conf /etc/nginx/sites-available/default
+
+# 创建MySQL配置
+RUN mkdir -p /etc/mysql/conf.d
+COPY docker/mysql.cnf /etc/mysql/conf.d/
+
+# 创建初始化SQL脚本
+COPY init-sql/ /docker-entrypoint-initdb.d/
+
+# 创建supervisor配置
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# 创建启动脚本
+COPY docker/start.sh /start.sh
+RUN chmod +x /start.sh
+
+# 创建必要的目录
+RUN mkdir -p /app/uploads /app/logs /var/log/supervisor /run/mysqld \
+    && chown mysql:mysql /var/lib/mysql /run/mysqld
+
+# 暴露端口
+EXPOSE 80 8080 3306
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=5 \
+    CMD curl -f http://localhost/health && curl -f http://localhost:8080/actuator/health
+
+# 启动所有服务
+CMD ["/start.sh"]
