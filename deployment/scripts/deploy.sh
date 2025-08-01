@@ -1,15 +1,20 @@
 #!/bin/bash
 
 # 寻物助手Docker部署脚本
-# 支持多种部署方式
+# 支持多种部署方式，包括Git自动拉取
 
 set -e
 
-# 切换到deployment目录
-cd "$(dirname "$0")/.." || exit 1
+# 项目配置
+REPO_URL="https://github.com/wangheng19901021/search-assistant.git"
+PROJECT_ROOT="$(dirname "$0")/../.."
+
+# 切换到项目根目录
+cd "$PROJECT_ROOT" || exit 1
 
 echo "🚀 寻物助手 Docker 部署工具"
 echo "================================"
+echo "📍 项目目录: $(pwd)"
 
 # 颜色定义
 RED='\033[0;31m'
@@ -21,9 +26,10 @@ NC='\033[0m' # No Color
 # 显示帮助信息
 show_help() {
     echo "使用方法："
-    echo "  ./deploy.sh [选项]"
+    echo "  ./deployment/scripts/deploy.sh [选项]"
     echo ""
     echo "选项："
+    echo "  --update, -u      更新代码并部署"
     echo "  --single, -s      单容器部署（一个容器包含所有服务）"
     echo "  --multi, -m       多容器部署（默认，服务分离）"
     echo "  --dev, -d         开发模式部署"
@@ -32,14 +38,24 @@ show_help() {
     echo "  --restart         重启所有服务"
     echo "  --logs            查看日志"
     echo "  --clean           清理所有数据和镜像"
+    echo "  --status          查看服务状态"
     echo "  --help, -h        显示帮助信息"
     echo ""
     echo "示例："
-    echo "  ./scripts/deploy.sh              # 默认多容器部署"
-    echo "  ./scripts/deploy.sh --single     # 单容器部署"
-    echo "  ./scripts/deploy.sh --prod       # 生产环境部署"
-    echo "  ./scripts/deploy.sh --stop       # 停止服务"
-    echo "  ./scripts/deploy.sh --logs       # 查看日志"
+    echo "  ./deployment/scripts/deploy.sh           # 默认多容器部署"
+    echo "  ./deployment/scripts/deploy.sh --update  # 更新代码并部署"
+    echo "  ./deployment/scripts/deploy.sh --single  # 单容器部署"
+    echo "  ./deployment/scripts/deploy.sh --prod    # 生产环境部署"
+    echo "  ./deployment/scripts/deploy.sh --status  # 查看服务状态"
+}
+
+# 检查Git环境
+check_git() {
+    if ! command -v git &> /dev/null; then
+        echo -e "${RED}❌ Git未安装，请先安装Git${NC}"
+        echo "安装指南: https://git-scm.com/downloads"
+        exit 1
+    fi
 }
 
 # 检查Docker环境
@@ -57,6 +73,41 @@ check_docker() {
     fi
 
     echo -e "${GREEN}✅ Docker环境检查通过${NC}"
+}
+
+# 更新代码
+update_code() {
+    echo -e "${BLUE}📦 检查代码更新...${NC}"
+    
+    if [ -d ".git" ]; then
+        # 检查是否有未提交的更改
+        if [ -n "$(git status --porcelain)" ]; then
+            echo -e "${YELLOW}⚠️  检测到本地修改，将暂存这些修改${NC}"
+            git stash push -m "Auto stash before update $(date)" 2>/dev/null || true
+        fi
+        
+        # 拉取最新代码
+        echo -e "${BLUE}⬇️  拉取最新代码...${NC}"
+        git fetch origin
+        
+        # 检查是否有更新
+        LOCAL=$(git rev-parse HEAD)
+        REMOTE=$(git rev-parse origin/main)
+        
+        if [ "$LOCAL" = "$REMOTE" ]; then
+            echo -e "${GREEN}✅ 代码已是最新版本${NC}"
+        else
+            echo -e "${YELLOW}🔄 发现新版本，正在更新...${NC}"
+            git reset --hard origin/main
+            echo -e "${GREEN}✅ 代码更新完成${NC}"
+            
+            # 显示更新信息
+            echo -e "${BLUE}📋 更新信息:${NC}"
+            git log --oneline -5
+        fi
+    else
+        echo -e "${YELLOW}⚠️  当前目录不是Git仓库，跳过代码更新${NC}"
+    fi
 }
 
 # 检查端口占用
@@ -105,7 +156,9 @@ deploy_single() {
     prepare_environment
     
     echo "构建并启动容器..."
+    cd deployment
     docker-compose -f docker-compose.single.yml up --build -d
+    cd ..
     
     show_deployment_info "single"
 }
@@ -118,7 +171,9 @@ deploy_multi() {
     prepare_environment
     
     echo "构建并启动所有服务..."
-    docker-compose -f docker-compose.yml up --build -d
+    cd deployment
+    docker-compose up --build -d
+    cd ..
     
     show_deployment_info "multi"
 }
@@ -127,14 +182,17 @@ deploy_multi() {
 deploy_dev() {
     echo -e "${BLUE}🔧 开发模式部署${NC}"
     
-    # 复制开发配置
+    prepare_environment
+    
+    # 创建开发配置
+    cd deployment
     cp docker-compose.yml docker-compose.dev.yml
     
-    # 修改开发配置（可以添加更多开发特定设置）
+    # 修改开发配置
     sed -i 's/restart: unless-stopped/restart: "no"/g' docker-compose.dev.yml
     
-    prepare_environment
     docker-compose -f docker-compose.dev.yml up --build -d
+    cd ..
     
     show_deployment_info "dev"
 }
@@ -144,21 +202,23 @@ deploy_prod() {
     echo -e "${BLUE}🏭 生产模式部署${NC}"
     
     # 检查生产环境配置
-    if [ ! -f ".env.prod" ]; then
-        echo -e "${YELLOW}⚠️  未找到生产环境配置文件 .env.prod${NC}"
+    if [ ! -f "deployment/.env.prod" ]; then
+        echo -e "${YELLOW}⚠️  未找到生产环境配置文件 deployment/.env.prod${NC}"
         echo "创建默认配置..."
-        cat > .env.prod << EOF
+        cat > deployment/.env.prod << EOF
 # 生产环境配置
 MYSQL_ROOT_PASSWORD=your_secure_root_password_here
 MYSQL_PASSWORD=your_secure_password_here
 COMPOSE_PROJECT_NAME=search-assistant-prod
 EOF
-        echo -e "${YELLOW}请编辑 .env.prod 文件，设置安全的密码${NC}"
+        echo -e "${YELLOW}请编辑 deployment/.env.prod 文件，设置安全的密码${NC}"
         read -p "按回车键继续..."
     fi
     
     prepare_environment
-    docker-compose --env-file .env.prod -f docker-compose.yml up --build -d
+    cd deployment
+    docker-compose --env-file .env.prod up --build -d
+    cd ..
     
     show_deployment_info "prod"
 }
@@ -184,15 +244,16 @@ show_deployment_info() {
     fi
     
     echo ""
-    echo "默认账号信息："
-    echo "  数据库用户: findthing"
-    echo "  数据库密码: findthing123"
-    echo "  数据库名称: search_assistant"
+    echo "数据库信息："
+    echo "  用户名: findthing"
+    echo "  密码: findthing123"
+    echo "  数据库: search_assistant"
     echo ""
     echo "常用命令："
-    echo "  查看日志: ./scripts/deploy.sh --logs"
-    echo "  停止服务: ./scripts/deploy.sh --stop"
-    echo "  重启服务: ./scripts/deploy.sh --restart"
+    echo "  查看状态: ./deployment/scripts/deploy.sh --status"
+    echo "  查看日志: ./deployment/scripts/deploy.sh --logs"
+    echo "  停止服务: ./deployment/scripts/deploy.sh --stop"
+    echo "  重启服务: ./deployment/scripts/deploy.sh --restart"
     echo ""
     
     # 健康检查
@@ -230,14 +291,58 @@ check_health() {
     fi
 }
 
+# 查看服务状态
+show_status() {
+    echo -e "${BLUE}📊 服务状态${NC}"
+    echo "================================"
+    
+    echo ""
+    echo "Docker容器状态:"
+    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "(search-assistant|NAMES)" || echo "未找到运行中的容器"
+    
+    echo ""
+    echo "系统资源使用:"
+    docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" 2>/dev/null | grep -E "(search-assistant|NAME)" || true
+    
+    echo ""
+    echo "访问地址:"
+    echo "  🌐 前端页面: http://localhost"
+    echo "  📡 后端API:  http://localhost:8080"
+    
+    echo ""
+    echo "服务健康状态:"
+    if curl -f -s http://localhost > /dev/null 2>&1; then
+        echo -e "  前端: ${GREEN}✅ 正常${NC}"
+    else
+        echo -e "  前端: ${RED}❌ 异常${NC}"
+    fi
+    
+    if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+        echo -e "  后端: ${GREEN}✅ 正常${NC}"
+    else
+        echo -e "  后端: ${RED}❌ 异常${NC}"
+    fi
+    
+    # 显示版本信息
+    if [ -d ".git" ]; then
+        echo ""
+        echo "版本信息:"
+        echo "  提交: $(git rev-parse --short HEAD)"
+        echo "  分支: $(git branch --show-current)"
+        echo "  最近更新: $(git log -1 --pretty=format:'%ad' --date=short)"
+    fi
+}
+
 # 停止服务
 stop_services() {
     echo -e "${YELLOW}🛑 停止所有服务...${NC}"
     
+    cd deployment
     # 尝试停止所有可能的compose文件
-    docker-compose -f docker-compose.yml down 2>/dev/null || true
+    docker-compose down 2>/dev/null || true
     docker-compose -f docker-compose.single.yml down 2>/dev/null || true
     docker-compose -f docker-compose.dev.yml down 2>/dev/null || true
+    cd ..
     
     echo -e "${GREEN}✅ 服务已停止${NC}"
 }
@@ -256,13 +361,15 @@ show_logs() {
     echo "按 Ctrl+C 退出日志查看"
     sleep 2
     
-    if docker-compose -f docker-compose.yml ps | grep -q "search-assistant"; then
-        docker-compose -f docker-compose.yml logs -f
+    cd deployment
+    if docker-compose ps | grep -q "search-assistant"; then
+        docker-compose logs -f
     elif docker ps | grep -q "search-assistant-all-in-one"; then
         docker logs -f search-assistant-all-in-one
     else
         echo -e "${RED}❌ 未找到运行中的服务${NC}"
     fi
+    cd ..
 }
 
 # 清理环境
@@ -273,12 +380,14 @@ clean_environment() {
     echo
     
     if [[ $REPLY =~ ^[Yy]$ ]]; then
+        cd deployment
         # 停止并删除容器
-        docker-compose -f docker-compose.yml down -v --rmi all 2>/dev/null || true
+        docker-compose down -v --rmi all 2>/dev/null || true
         docker-compose -f docker-compose.single.yml down -v --rmi all 2>/dev/null || true
+        cd ..
         
         # 删除相关镜像
-        docker images | grep search-assistant | awk '{print $3}' | xargs -r docker rmi -f
+        docker images | grep search-assistant | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
         
         # 清理数据目录
         sudo rm -rf logs uploads
@@ -292,6 +401,13 @@ clean_environment() {
 # 主函数
 main() {
     case "${1:-multi}" in
+        --update|-u)
+            check_git
+            check_docker
+            update_code
+            check_ports
+            deploy_multi
+            ;;
         --single|-s)
             check_docker
             check_ports
@@ -311,6 +427,9 @@ main() {
             check_docker
             check_ports
             deploy_prod
+            ;;
+        --status)
+            show_status
             ;;
         --stop)
             stop_services

@@ -1,162 +1,178 @@
-# 🚀 寻物助手 - 快速启动指南
+# ⚡ 寻物助手快速开始指南
 
-## 环境要求
+## 🎯 部署方式选择
 
-### 必需环境
-- **Java 17+** (推荐OpenJDK 17)
-- **MySQL 8.0+**
-- **现代浏览器** (Chrome, Firefox, Safari, Edge)
+### 🚀 方式一：Git克隆部署（推荐）
 
-### 安装Java环境
-
-#### Ubuntu/Debian
 ```bash
-sudo apt update
-sudo apt install openjdk-17-jdk
+# 1. 克隆项目
+git clone https://github.com/wangheng19901021/search-assistant.git
+cd search-assistant
+
+# 2. 一键部署
+./deployment/scripts/deploy.sh
+
+# 3. 访问应用
+# 前端: http://localhost
+# 后端: http://localhost:8080
 ```
 
-#### CentOS/RHEL/Rocky Linux
+### 🔄 方式二：自动更新部署
+
 ```bash
-sudo yum install java-17-openjdk-devel
-# 或使用 dnf
-sudo dnf install java-17-openjdk-devel
+# 如果已经克隆过项目，可以直接更新并部署
+./deployment/scripts/deploy.sh --update
 ```
-
-#### Windows
-从 [Adoptium](https://adoptium.net/) 下载并安装OpenJDK 17
-
-#### macOS
-```bash
-# 使用 Homebrew
-brew install openjdk@17
-```
-
-### 验证Java安装
-```bash
-java -version
-# 应显示 Java 17 或更高版本
-```
-
-## 数据库设置
-
-### MySQL配置
-1. 安装MySQL 8.0
-2. 创建数据库：
-```sql
-CREATE DATABASE search_assistant CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-3. 创建用户（可选）：
-```sql
-CREATE USER 'findthing'@'localhost' IDENTIFIED BY 'your_password';
-GRANT ALL PRIVILEGES ON search_assistant.* TO 'findthing'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-### 配置文件
-编辑 `backend/src/main/resources/application.yml`，确保数据库连接信息正确：
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/search_assistant
-    username: root  # 或您的用户名
-    password: your_password  # 您的密码
-```
-
-## 启动应用
-
-### 方法1: 使用启动脚本（推荐）
-```bash
-cd /path/to/Search\ Assistant
-chmod +x start.sh
-./start.sh
-```
-
-### 方法2: 手动启动
-```bash
-cd /path/to/Search\ Assistant/backend
-./mvnw spring-boot:run
-```
-
-## 访问应用
-
-启动成功后，访问：
-- **主应用**: http://localhost:8080/index.html
-- **API文档**: http://localhost:8080/doc.html (如果启用了Swagger)
-
-## 首次运行
-
-第一次启动时：
-1. ⏳ **下载依赖** - Maven会下载所需的Java库（2-5分钟）
-2. 🔨 **编译项目** - 编译Spring Boot应用
-3. 🗄️ **初始化数据库** - 自动创建数据表
-4. 🚀 **启动服务** - 应用准备就绪
-
-看到以下信息表示启动成功：
-```
-Started SearchAssistantApplication in X.XXX seconds
-```
-
-## 故障排除
-
-### 常见问题
-
-#### 1. "java: command not found"
-- 安装Java 17+，确保已添加到PATH环境变量
-
-#### 2. "Access denied for user 'root'@'localhost'"
-- 检查MySQL用户名和密码
-- 确保MySQL服务正在运行
-
-#### 3. "Port 8080 was already in use"
-- 停止占用8080端口的程序
-- 或修改 `application.yml` 中的 `server.port`
-
-#### 4. "mvnw: Permission denied"
-- 运行: `chmod +x backend/mvnw`
-
-#### 5. Maven依赖下载失败
-- 检查网络连接
-- 配置Maven镜像（如阿里云镜像）
-
-### 日志查看
-应用启动后会在控制台显示详细日志，出现问题时请查看错误信息。
-
-## 开发模式
-
-### 热重载
-在开发模式下，修改Java代码后会自动重启应用：
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.devtools.restart.enabled=true"
-```
-
-### 调试模式
-启动调试模式（端口5005）：
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
-```
-
-## 生产部署
-
-### 构建JAR包
-```bash
-./mvnw clean package -DskipTests
-```
-构建完成后，JAR包位于 `target/` 目录。
-
-### 运行JAR包
-```bash
-java -jar target/search-assistant-2.0.0.jar
-```
-
-## 技术支持
-
-如遇到问题：
-1. 检查Java和MySQL版本
-2. 查看控制台错误信息
-3. 确认防火墙和端口设置
-4. 检查数据库连接权限
 
 ---
 
-💡 **提示**: 首次启动需要联网下载依赖，请确保网络连接正常。
+## 🎮 常用命令
+
+### 基础操作
+```bash
+# 默认多容器部署
+./deployment/scripts/deploy.sh
+
+# 单容器部署（节省资源）
+./deployment/scripts/deploy.sh --single
+
+# 生产环境部署
+./deployment/scripts/deploy.sh --prod
+
+# 开发环境部署
+./deployment/scripts/deploy.sh --dev
+```
+
+### 管理操作
+```bash
+# 查看服务状态
+./deployment/scripts/deploy.sh --status
+
+# 查看服务日志  
+./deployment/scripts/deploy.sh --logs
+
+# 停止所有服务
+./deployment/scripts/deploy.sh --stop
+
+# 重启服务
+./deployment/scripts/deploy.sh --restart
+
+# 清理环境
+./deployment/scripts/deploy.sh --clean
+```
+
+---
+
+## 🔧 系统要求
+
+### 最低要求
+- **Docker**: 20.10+
+- **Docker Compose**: 2.0+
+- **内存**: 2GB
+- **磁盘**: 5GB
+
+### 端口需求
+- `80` - 前端服务
+- `8080` - 后端API
+- `3306` - MySQL数据库
+
+---
+
+## 🏠 访问地址
+
+部署完成后：
+- 🌐 **前端应用**: http://localhost
+- 📡 **后端API**: http://localhost:8080
+- 🗄️ **数据库**: localhost:3306
+
+### 数据库信息
+- **用户名**: `findthing`
+- **密码**: `findthing123`
+- **数据库**: `search_assistant`
+
+---
+
+## 🔍 故障排除
+
+### 常见问题
+
+#### 端口被占用
+```bash
+# 检查端口占用
+sudo netstat -tlnp | grep :80
+sudo netstat -tlnp | grep :8080
+
+# 停止占用服务
+sudo systemctl stop apache2  # 停止Apache
+sudo systemctl stop nginx    # 停止Nginx
+```
+
+#### Docker权限问题
+```bash
+# 添加Docker权限
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+#### 服务启动失败
+```bash
+# 查看详细日志
+./deployment/scripts/deploy.sh --logs
+
+# 重新部署
+./deployment/scripts/deploy.sh --clean
+./deployment/scripts/deploy.sh
+```
+
+---
+
+## 📊 功能特性
+
+### 🔍 智能搜索
+- 关键词搜索
+- 分类筛选
+- 位置查找
+- 标签搜索
+
+### 📱 响应式设计
+- 手机端适配
+- 平板端优化
+- 桌面端完整体验
+
+### 💾 数据管理
+- 物品信息管理
+- 图片上传支持
+- 数据导出功能
+- 自动备份
+
+---
+
+## 🎉 开始使用
+
+1. **添加第一个物品**
+   - 点击"添加物品"按钮
+   - 填写物品信息
+   - 选择分类和位置
+   - 上传物品图片
+
+2. **搜索物品**
+   - 使用顶部搜索框
+   - 输入关键词即时搜索
+   - 使用分类和位置筛选
+
+3. **管理物品**
+   - 点击物品卡片查看详情
+   - 编辑物品信息
+   - 标记物品状态
+
+---
+
+## 📞 获取帮助
+
+- 📖 **项目文档**: [README.md](../README.md)
+- 📁 **目录说明**: [DIRECTORY_STRUCTURE.md](../DIRECTORY_STRUCTURE.md)
+- 🐛 **问题反馈**: [GitHub Issues](https://github.com/wangheng19901021/search-assistant/issues)
+
+---
+
+**🎯 提示**: 首次启动可能需要几分钟时间下载Docker镜像，请耐心等待！

@@ -8,8 +8,9 @@
 Search Assistant/
 ├── src/                    # 源代码目录
 ├── deployment/             # 部署配置目录  
-├── docs/                   # 项目文档目录
-└── README.md              # 项目总览
+├── docs/                   # 核心文档目录
+├── README.md              # 项目总览
+└── DIRECTORY_STRUCTURE.md # 目录结构说明
 ```
 
 ---
@@ -48,31 +49,28 @@ src/
 ### 🚀 deployment/ - 部署配置目录
 ```
 deployment/
-├── docker-compose.yml        # 多容器编排配置
+├── docker-compose.yml        # 多容器编排配置 (推荐)
 ├── docker-compose.single.yml # 单容器部署配置
 ├── scripts/                  # 部署脚本
-│   ├── deploy.sh            # 主部署脚本 (一键部署)
-│   └── start.sh             # 启动脚本
+│   └── deploy.sh            # 主部署脚本 (支持Git自动拉取)
 ├── docker/                   # Docker 配置文件
 │   └── Dockerfile.all-in-one # 单容器镜像构建文件
 └── configs/                  # 配置文件
     ├── init-sql/            # 数据库初始化脚本
-    │   ├── 01-schema.sql    # 数据库表结构
+    │   ├── 01-schema.sql    # 数据库表结构 (9个核心表)
     │   └── 02-init-data.sql # 基础数据插入
-    ├── mysql.cnf           # MySQL 配置
+    ├── mysql.cnf           # MySQL 优化配置
     ├── start.sh            # 容器启动脚本
     └── supervisord.conf    # 进程管理配置
 ```
 
-### 📚 docs/ - 文档目录
+### 📚 docs/ - 核心文档目录
 ```
 docs/
-├── README.md                # 项目介绍和快速开始
-├── DOCKER_DEPLOYMENT.md     # Docker 部署完整指南
-├── DEPLOYMENT_GUIDE.md      # 传统部署指南
 ├── QUICK_START.md          # 快速开始指南
+├── DOCKER_DEPLOYMENT.md    # Docker 部署指南
 ├── CHANGELOG.md            # 版本更新日志
-└── CLAUDE.md              # 开发历程和技术说明
+└── CLAUDE.md              # 开发历程记录
 ```
 
 ---
@@ -90,15 +88,15 @@ docs/
 - **特点**: 环境相关，支持多种部署方式
 
 ### 📁 **docs/** - 项目文档
-- **用途**: 存放所有项目文档和说明
-- **包含**: 使用指南、部署文档、开发说明
-- **特点**: 面向用户和开发者的完整文档
+- **用途**: 存放精简的核心文档
+- **包含**: 使用指南、部署文档
+- **特点**: 简洁明了，便于用户快速上手
 
 ---
 
 ## 🚀 使用指南
 
-### 开发者使用
+### 🔨 开发者使用
 ```bash
 # 查看源码
 cd src/backend          # 后端 Spring Boot 代码
@@ -108,34 +106,46 @@ cd src/frontend         # 前端单页面应用
 cd src/backend && ./mvnw spring-boot:run
 ```
 
-### 部署人员使用
+### 🚀 部署人员使用
 ```bash
 # 一键部署
-cd deployment/scripts
-./deploy.sh
+./deployment/scripts/deploy.sh
 
-# 查看配置
-cd deployment
-ls -la                  # 查看所有部署配置
+# 更新并部署
+./deployment/scripts/deploy.sh --update
+
+# 查看状态
+./deployment/scripts/deploy.sh --status
 ```
 
-### 用户使用
+### 📖 用户使用
 ```bash
 # 查看文档
-cd docs
 cat README.md           # 项目介绍
-cat DOCKER_DEPLOYMENT.md  # 部署指南
+cat docs/QUICK_START.md # 快速开始
 ```
 
 ---
 
-## 🔧 配置文件路径更新
+## 🔧 增强功能
 
-重构后的配置文件路径已自动更新：
+### 🆕 **Git自动拉取部署**
 
-- **Docker Compose**: 引用路径已更新为 `../src/backend`, `../src/frontend`
-- **部署脚本**: 自动切换到 `deployment` 目录执行
-- **数据库脚本**: 路径更新为 `./configs/init-sql`
+新的部署脚本支持从GitHub自动拉取最新代码：
+
+```bash
+# 自动更新代码并部署
+./deployment/scripts/deploy.sh --update
+
+# 检查代码版本
+./deployment/scripts/deploy.sh --status
+```
+
+**功能特点**：
+- ✅ 自动检测代码更新
+- ✅ 智能暂存本地修改
+- ✅ 显示版本更新信息
+- ✅ 保持原有部署方式
 
 ---
 
@@ -146,15 +156,15 @@ cat DOCKER_DEPLOYMENT.md  # 部署指南
 - 便于版本控制和协作开发
 - 易于理解和维护
 
-### 🚀 **部署便利**
-- 所有部署文件集中管理
-- 支持多种部署方式
-- 一键式自动化部署
+### 🚀 **部署便利** 
+- 保持原有Docker一键部署
+- 增加Git自动拉取功能
+- 支持多种部署模式
 
-### 📚 **文档完善**
-- 完整的使用指南
-- 详细的部署说明
-- 清晰的目录结构
+### 📚 **文档精简**
+- 移除重复和无用文档
+- 保留核心使用指南
+- 结构清晰易懂
 
 ### 🔧 **易于扩展**
 - 模块化目录结构
@@ -165,9 +175,23 @@ cat DOCKER_DEPLOYMENT.md  # 部署指南
 
 ## 🛠️ 快速开始
 
-1. **查看项目**: `cat docs/README.md`
-2. **本地开发**: `cd src/` 
-3. **一键部署**: `cd deployment/scripts && ./deploy.sh`
-4. **查看文档**: `ls docs/`
+```bash
+# 1. 克隆项目
+git clone https://github.com/wangheng19901021/search-assistant.git
+cd search-assistant
+
+# 2. 一键部署
+./deployment/scripts/deploy.sh
+
+# 3. 更新部署
+./deployment/scripts/deploy.sh --update
+
+# 4. 查看状态
+./deployment/scripts/deploy.sh --status
+```
+
+**访问地址**：
+- 🌐 前端应用: http://localhost
+- 📡 后端API: http://localhost:8080
 
 现在您可以清楚地了解每个文件和目录的作用，轻松进行开发和部署！

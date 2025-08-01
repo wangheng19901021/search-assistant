@@ -39,44 +39,51 @@
 
 ## 🚀 快速开始
 
-### 方式1: Docker一键部署（推荐）
+### ⚡ 一键部署（推荐）
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/yourusername/search-assistant.git
+git clone https://github.com/wangheng19901021/search-assistant.git
 cd search-assistant
 
 # 2. 一键部署
-chmod +x deployment/scripts/deploy.sh
 ./deployment/scripts/deploy.sh
 
 # 3. 访问应用
 # 前端: http://localhost
-# 后端API: http://localhost:8080
+# 后端: http://localhost:8080
 ```
 
-### 方式2: 本地开发
+### 🔄 更新部署
 
 ```bash
-# 1. 启动数据库
-docker run -d --name mysql-dev -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root mysql:8.0
+# 自动拉取最新代码并部署
+./deployment/scripts/deploy.sh --update
 
-# 2. 启动后端
-cd src/backend
-./mvnw spring-boot:run
+# 查看服务状态
+./deployment/scripts/deploy.sh --status
+```
 
-# 3. 启动前端
-cd src/frontend
-# 使用任意HTTP服务器，如：python -m http.server 8000
+### 🎛️ 更多部署选项
+
+```bash
+# 单容器部署（节省资源）
+./deployment/scripts/deploy.sh --single
+
+# 生产环境部署
+./deployment/scripts/deploy.sh --prod
+
+# 开发环境部署  
+./deployment/scripts/deploy.sh --dev
 ```
 
 ## 📚 详细文档
 
 - 📖 [项目结构说明](DIRECTORY_STRUCTURE.md)
-- 🚀 [服务器部署指南](docs/SERVER_DEPLOYMENT_GUIDE.md)
-- 🐳 [Docker部署详解](docs/DOCKER_DEPLOYMENT.md)
 - ⚡ [快速开始指南](docs/QUICK_START.md)
+- 🐳 [Docker部署详解](docs/DOCKER_DEPLOYMENT.md)
 - 📋 [更新日志](docs/CHANGELOG.md)
+- 🔧 [开发历程记录](docs/CLAUDE.md)
 
 ## 🏗️ 项目结构
 
@@ -179,15 +186,15 @@ search-assistant/
 
 ## 🔗 相关链接
 
-- 📖 [在线文档](https://yourusername.github.io/search-assistant)
-- 🐛 [问题反馈](https://github.com/yourusername/search-assistant/issues)
-- 💬 [讨论区](https://github.com/yourusername/search-assistant/discussions)
+- 📖 [在线文档](https://github.com/wangheng19901021/search-assistant/blob/main/README.md)
+- 🐛 [问题反馈](https://github.com/wangheng19901021/search-assistant/issues)
+- 💬 [讨论区](https://github.com/wangheng19901021/search-assistant/discussions)
 
 ## 👨‍💻 作者信息
 
-- **作者**: Your Name
-- **邮箱**: your-email@example.com
-- **GitHub**: [@yourusername](https://github.com/yourusername)
+- **作者**: wangheng19901021
+- **GitHub**: [@wangheng19901021](https://github.com/wangheng19901021)
+- **项目地址**: [search-assistant](https://github.com/wangheng19901021/search-assistant)
 
 ---
 
@@ -195,6 +202,6 @@ search-assistant/
 
 **如果这个项目对您有帮助，请给个 ⭐ Star 支持一下！**
 
-Made with ❤️ by [Your Name](https://github.com/yourusername)
+Made with ❤️ by [wangheng19901021](https://github.com/wangheng19901021)
 
 </div>
