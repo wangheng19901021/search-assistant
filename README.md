@@ -80,6 +80,7 @@ cd search-assistant
 ## 📚 详细文档
 
 - 📖 [项目结构说明](DIRECTORY_STRUCTURE.md)
+- 🚀 [完整部署指南](docs/DEPLOYMENT_GUIDE.md)
 - ⚡ [快速开始指南](docs/QUICK_START.md)
 - 🐳 [Docker部署详解](docs/DOCKER_DEPLOYMENT.md)
 - 📋 [更新日志](docs/CHANGELOG.md)
